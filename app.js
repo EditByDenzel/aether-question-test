@@ -16,7 +16,8 @@ for (const m of [1,2]) {
     }
   } catch { storageAvailable=false; }
 }
-const total = () => module===1?questions.length+1:module2.length;
+const writtenQuestions = module2.filter(q => q.kind === 'written');
+const total = () => module===1?questions.length+1:10;
 const question = () => module===1?questions[page]:module2[page];
 const currentId = () => question()?.id || 'transcription';
 const current = () => stored[module][currentId()] ||= {choice:null,text:'',submitted:false};
@@ -47,18 +48,49 @@ function notes(q){
   if(q?.missingAudio){const p=document.createElement('p');p.className='hint';p.textContent='The original audio links are shown in the photographs, but those audio files and link URLs were not supplied.';$('source-notes').append(p);}
   if(q?.sourceResponse){const d=document.createElement('details'),s=document.createElement('summary'),p=document.createElement('p'),t=document.createElement('p');s.textContent='Response shown in the source photograph';p.textContent='Reference transcription only. This response is not a verified answer key.';p.className='hint';t.textContent=q.sourceResponse;d.append(s,p,t);$('source-notes').append(d);}
 }
+
+function renderWrittenQuestions(){
+  const host=$('written-questions');host.replaceChildren();
+  for(const q of writtenQuestions){
+    const a=stored[2][q.id] ||= {choice:null,text:'',submitted:false};
+    const section=document.createElement('section');section.className='written-question';section.id=q.id;
+    const intro=document.createElement('div');intro.className='written-intro';intro.innerHTML=q.html;section.append(intro);
+    const clips=document.createElement('div');clips.className='written-audio';
+    for(const [label,src] of q.audio||[]){const box=document.createElement('div'),h=document.createElement('h3'),audio=document.createElement('audio');h.textContent=label;audio.controls=true;audio.preload='metadata';audio.src=src;audio.setAttribute('aria-label',q.title+' '+label);audio.addEventListener('play',()=>document.querySelectorAll('audio').forEach(other=>{if(other!==audio)other.pause();}));box.append(h,audio);clips.append(box);}section.append(clips);
+    const form=document.createElement('form');form.className='written-form';form.action='/';form.method='post';form.setAttribute('aria-label',q.title);
+    const fieldset=document.createElement('fieldset'),legend=document.createElement('legend');legend.textContent=q.question;fieldset.append(legend);form.append(fieldset);
+    const label=document.createElement('label');label.htmlFor='answer-'+q.id;label.textContent='Please respond below.';label.className='written-label';
+    const minimum=document.createElement('p');minimum.className='written-minimum';minimum.textContent=q.minimum+' min char';
+    const warning=document.createElement('p');warning.className='written-warning';warning.textContent='Do not copy and paste from this field, the question, or the instructions above.';
+    const input=document.createElement('textarea');input.id='answer-'+q.id;input.name='answer';input.rows=4;input.maxLength=10000;input.placeholder='Type answer here...';input.value=a.text;
+    const count=document.createElement('p');count.id='count-'+q.id;count.className='written-count';
+    const message=document.createElement('div');message.id='feedback-'+q.id;message.setAttribute('role','status');message.setAttribute('aria-live','polite');input.setAttribute('aria-describedby',count.id+' '+message.id);
+    const row=document.createElement('div');row.className='submit-row';const submit=document.createElement('button');submit.type='submit';submit.className='primary';submit.id='submit-'+q.id;row.append(submit);
+    function status(error=''){count.textContent='Char count '+[...input.value].length;submit.textContent=a.submitted?'Update Answer':'Submit Answer';message.className=error?'feedback error':a.submitted?'feedback neutral':'';message.textContent=error|| (a.submitted?'✓ Answer saved. No verified answer key was supplied for this response.':'');input.setAttribute('aria-invalid',error?'true':'false');}
+    input.addEventListener('input',()=>{a.text=input.value;a.submitted=false;status();save();updateProgress();});
+    form.addEventListener('submit',event=>{event.preventDefault();if([...a.text.trim()].length<q.minimum){status('Please write at least '+q.minimum+' characters before submitting.');input.focus();return;}a.submitted=true;status();save();updateProgress();});
+    form.append(label,minimum,warning,input,count,message,row);section.append(form);status();
+    if(q.sourceResponse){const details=document.createElement('details'),summary=document.createElement('summary'),note=document.createElement('p'),response=document.createElement('p');summary.textContent='Response shown in the source photograph';note.className='hint';note.textContent='Reference transcription only. This response is not a verified answer key.';response.textContent=q.sourceResponse;details.append(summary,note,response);section.append(details);}
+    host.append(section);
+  }
+}
+
 function render(focus=false){
   document.querySelectorAll('audio').forEach(a=>a.pause());
   const q=question(),p=module===1&&q&&projects[q.project],a=current();
   document.body.classList.toggle('transcription',module===1&&!q);
   document.body.classList.toggle('module-two',module===2);
+  const combined=module===2&&page===9;
+  document.body.classList.toggle('written-page',combined);
+  $('written-questions').hidden=!combined;
+  $('written-questions').replaceChildren();
   document.documentElement.lang=module===2?'th':'en';
   $('module').value=String(module);
   $('title').textContent=module===2?q.section:(q?`${p.name} Knowledge Check`:'Transcription Knowledge Check');
   $('counter').textContent=module===2?`Page ${page+1} of ${total()}`:(q?`Question ${page+1} of ${questions.length}`:'Practice page');
   $('intro').replaceChildren();
   if(module===2){
-    $('intro').innerHTML=q.html;
+    $('intro').innerHTML=combined?'':q.html;
     $('intro').querySelectorAll('.reference-link').forEach(b=>b.addEventListener('click',()=>{ $('guideline-note').textContent='The project-instructions link URL was not supplied in the photographs. The available course guidance is reproduced on the Project Overview page.';$('guidelines').showModal();}));
   }else if(q){
     const intro=document.createElement('p');intro.textContent=`In the next section, we’re going to test your knowledge ${q.project==='flywheel'?'of':'on'} the ${p.name} project (${p.id}).`;
@@ -66,9 +98,10 @@ function render(focus=false){
     const link=document.createElement('button');link.type='button';link.className='link';link.textContent='guidelines';link.addEventListener('click',()=>{$('guideline-note').textContent=p.notes;$('guidelines').showModal();});note.append(link,' - please go through them carefully before the quiz!');$('intro').append(intro,note);
   }else $('intro').innerHTML=transcription;
   $('audio-clips').replaceChildren();
-  for(const [label,src] of q?.audio||[]){const box=document.createElement('div'),h=document.createElement('h3'),audio=document.createElement('audio');h.textContent=label;audio.controls=true;audio.preload='metadata';audio.src=src;audio.setAttribute('aria-label',label);audio.addEventListener('play',()=>document.querySelectorAll('audio').forEach(other=>{if(other!==audio)other.pause();}));box.append(h,audio);$('audio-clips').append(box);}
-  notes(module===2?q:null);
-  $('question-form').hidden=module===2&&q.kind==='reading';
+  for(const [label,src] of combined?[]:(q?.audio||[])){const box=document.createElement('div'),h=document.createElement('h3'),audio=document.createElement('audio');h.textContent=label;audio.controls=true;audio.preload='metadata';audio.src=src;audio.setAttribute('aria-label',label);audio.addEventListener('play',()=>document.querySelectorAll('audio').forEach(other=>{if(other!==audio)other.pause();}));box.append(h,audio);$('audio-clips').append(box);}
+  notes(module===2&&!combined?q:null);
+  if(combined)renderWrittenQuestions();
+  $('question-form').hidden=module===2&&(q.kind==='reading'||combined);
   $('question').textContent=q?.question||'';
   $('attempts').textContent=a.submitted?'Response submitted · revisions allowed':'Attempts remaining: 1';
   $('choices').replaceChildren();
@@ -93,8 +126,9 @@ function readHash(){
   const match=location.hash.match(/^#module-2\/(\d+)$/);
   module=match?2:1;
   const value=Number(match?match[1]:location.hash.slice(1));
-  page=Number.isInteger(value)&&value>=1&&value<=total()?value-1:0;
+  page=Number.isInteger(value)&&value>=1&&value<=(module===2?module2.length:total())?Math.min(value-1,total()-1):0;
   lastPage[module]=page;render(true);
+  if(module===2&&value>10&&value<=14)document.getElementById(module2[value-1].id)?.scrollIntoView();
 }
 $('module').addEventListener('change',()=>{module=Number($('module').value);location.hash=hash(lastPage[module]);});
 $('answer').addEventListener('input',()=>{const a=current();a.text=$('answer').value;a.submitted=false;$('answer').setAttribute('aria-invalid','false');save();feedback();$('submit').textContent='Submit Answer';updateProgress();});

@@ -8,16 +8,18 @@
   <script type="module" src="app.js"></script>
 </head>
 <body>
-  <header class="brand">Aether</header>
+  <header class="brand"><div class="module-picker"><label for="module">Module</label><select id="module"><option value="1">Module 1</option><option value="2">Module 2</option></select></div><span>Aether</span></header>
   <main>
     <div class="utility"><span>Local demonstration · screenshot replica</span><button type="button" id="reset">Reset answers</button></div>
     <article class="panel">
       <header class="panel-header"><h1 id="title" tabindex="-1"></h1><span id="counter"></span></header>
       <div class="content">
         <div id="intro"></div>
+        <div id="audio-clips"></div>
+        <div id="source-notes"></div>
         <form id="question-form" action="/" method="post">
           <fieldset><legend id="question"></legend><div class="attempts" id="attempts"></div><div id="choices" class="choices"></div></fieldset>
-          <div class="answer-field"><label for="answer">Your answer</label><textarea id="answer" name="answer" rows="3" maxlength="10000" placeholder="Type your answer here, or choose an option above…"></textarea><p class="hint">Choose an option, type an answer, or do both.</p></div>
+          <div class="answer-field"><label for="answer" id="answer-label">Your answer</label><p id="answer-warning" class="source-warning" hidden></p><textarea id="answer" name="answer" rows="3" maxlength="10000" aria-describedby="answer-hint" placeholder="Type your answer here, or choose an option above…"></textarea><p class="hint" id="answer-hint">Choose an option, type an answer, or do both.</p></div>
           <div id="feedback" role="status" aria-live="polite"></div>
           <div class="submit-row"><button type="submit" id="submit" class="primary">Submit Answer</button></div>
         </form>
@@ -27,7 +29,7 @@
     <p class="storage" id="storage">Answers are saved in this browser. No responses are sent to a service.</p>
   </main>
   <dialog id="guidelines"><h2>Screenshot reference notes</h2><p id="guideline-note"></p><button type="button" id="close-guidelines">Close</button></dialog>
-  <dialog id="reset-dialog"><h2>Reset all answers?</h2><p>This clears the choices, typed answers, and submissions in this local quiz.</p><div class="dialog-actions"><button type="button" id="cancel-reset">Cancel</button><button type="button" id="confirm-reset" class="primary">Reset answers</button></div></dialog>
+  <dialog id="reset-dialog"><h2>Reset this module’s answers?</h2><p>This clears this module’s choices, typed answers, and submissions in this browser.</p><div class="dialog-actions"><button type="button" id="cancel-reset">Cancel</button><button type="button" id="confirm-reset" class="primary">Reset answers</button></div></dialog>
   <noscript>This quiz needs JavaScript enabled to save answers and navigate between questions.</noscript>
 </body>
 </html>

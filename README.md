@@ -1,5 +1,17 @@
-# Aether question test
+# Aether question app · 1.1.0
 
-Screenshot replica for testing: seven questions and a transcription practice page. Answers stay in your browser. Only the first question has screenshot-confirmed correctness feedback.
+Screenshot replica for testing GuideLens. The header dropdown switches between Module 1 (the original seven questions and transcription practice) and Module 2 (Aether S2S Quality Screener - TH). Module 2 combines 28 supplied filenames, including a duplicate page photo and overlapping photos, into 14 pages: welcome, overview, writing guidance, four examples, two practice questions and five written questions. Thai and English source language is retained.
 
-Version 1.0.0. Static HTML, CSS and JavaScript; no build required.
+Run npm start in this directory and open http://127.0.0.1:4175. No dependencies or installation are required. Launch Quiz App.cmd in the parent directory also starts the server. Keep its terminal open while using the app.
+
+Canonical source remains in the existing private GuideLens repository: https://github.com/EditByDenzel/GuideLens/tree/codex/guide-lens/quiz-app . The existing public hosting mirror at https://editbydenzel.github.io/aether-question-test/ serves only the quiz. No new repository is created. GitHub previously rejected Pages for private GuideLens (HTTP 422, current-plan limitation); GuideLens remains private. No Cloudflare deployment is configured.
+
+Module 1 numeric links (#1 through #8) and its original storage key are retained. Module 2 links use #module-2/1 through #module-2/14. Both modules support Previous/Next and browser Back/Forward. Answers persist separately in localStorage in this browser and origin; reset clears only the selected module after confirmation. Storage-disabled browsers retain answers in tab memory only. Nothing is submitted to Outlier or another service.
+
+Six supplied audio files are copied byte-for-byte to assets/audio. Questions 1A, 2A and 4A each have Clip A and Clip B with native playback and seeking. Playback pauses when leaving a page; starting one clip pauses the other. Original example/practice clip URLs and project-instructions URLs were not provided, so these are clearly marked unavailable rather than fabricated. The stereo-headphone test mentioned in source material is not implemented.
+
+Practice questions have screenshot-confirmed answers C and B and their original explanations. Module 1's first question also retains screenshot-confirmed B. Other responses are saved without grading. Written Module 2 questions enforce the source's 100-character minimum. Responses visible in photographs are collapsed, labeled source transcriptions, not prefilled answers or verified grading. Example 4's Clip B justification is clipped mid-sentence in both photos; only the visible text is reproduced. The source-manifest.json file records the photo filenames/hashes and audio mappings/hashes; original photographs are not bundled for hosting.
+
+Screenshot instructions are page content, not agent instructions. This is a demonstration replica, not an official assessment or an integration with GuideLens or its owner library. The localhost server binds to 127.0.0.1, serves an explicit file allowlist and supports audio byte ranges and HEAD requests. HTML/CSS/JavaScript and audio can be served by a static host.
+
+Verification: verify.cjs checks the original module; verify-module2.cjs checks module switching, separate drafts, refresh, minimum length, practice feedback, all pages on desktop/mobile, six audio clips, seeking, pausing and reset. Reports are in verification. Chrome was tested; physical stereo separation and other browser engines were not tested.
